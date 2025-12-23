@@ -1,0 +1,61 @@
+### Recuperar todas las películas
+GET http://localhost:3000/movies
+
+### Recuperar una película por ID
+GET http://localhost:3000/movies/dcdd0fad-a94c-4810-8acc-5f108d3b18c3
+
+### Filtrar películas por género
+GET http://localhost:3000/movies?genre=action
+
+### Crear una película
+POST http://localhost:3000/movies
+Content-Type: application/json
+
+{
+  "title": "The Godfather",
+  "year": 1975,
+  "director": "Francis Ford Coppola",
+  "duration": 175,
+  "poster": "https://m.media-amazon.com/images/I/51rOnIjLqzL._AC_.jpg",
+  "genre": [
+    "Crime",
+    "Drama"
+  ]
+}
+
+### Actualizar una película
+PATCH http://localhost:3000/movies/dcdd0fad-a94c-4810-8acc-5f108d3b18c3
+Content-Type: application/json
+
+{
+  "year": 1998
+}
+
+### Recuperar todos los usuarios
+GET http://localhost:3000/users
+
+### Registrar un usuario
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "username": "pablo003",
+  "password": "abc123"
+}
+
+### Iniciar sesión
+POST http://localhost:3000/users/login
+Content-Type: application/json
+
+{
+  "username": "pablo003",
+  "password": "abc123"
+}
+
+### Recuperar la información de uno mismo
+POST http://localhost:3000/users/get-self-info
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk5ZDA5NTdjLTZlNmYtNDRkNi04MjU4LTBkNGYxZTA0MDhhYyIsInVzZXJuYW1lIjoicGFibG8wMDMiLCJpYXQiOjE3NjY0NDc2NTUsImV4cCI6MTc2NjQ1MTI1NX0.V1KpUecNfQFL85tr3Qi9MAjEf_eptk7r-dYUqAUddJE"
+}

@@ -1,0 +1,28 @@
+{
+  "name": "pegese-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:3": "node --watch express.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pgonzalezs1999/pegese-backend.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pgonzalezs1999/pegese-backend/issues"
+  },
+  "homepage": "https://github.com/pgonzalezs1999/pegese-backend#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "bcrypt": "^6.0.0",
+    "express": "5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "picocolors": "1.0.0",
+    "zod": "4.2.1"
+  }
+}
