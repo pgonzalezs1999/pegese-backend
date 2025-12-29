@@ -57,5 +57,5 @@ POST http://localhost:3000/users/get-self-info
 Content-Type: application/json
 
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijk5ZDA5NTdjLTZlNmYtNDRkNi04MjU4LTBkNGYxZTA0MDhhYyIsInVzZXJuYW1lIjoicGFibG8wMDMiLCJpYXQiOjE3NjY0NDc2NTUsImV4cCI6MTc2NjQ1MTI1NX0.V1KpUecNfQFL85tr3Qi9MAjEf_eptk7r-dYUqAUddJE"
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDAzIiwiaWF0IjoxNzY2OTg0NDU0fQ.KighvKDeTkLWLhO3gtv-9OCDhylYIvCSMM3jQDXsWLo"
 }

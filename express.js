@@ -15,6 +15,14 @@ app.disable("x-powered-by")
 app.disable("etag")
 
 app.use(express.json())
+app.use((req, res, next) => {
+    req.session = { user: null }
+    try {
+        const data = jwt.verify(req.body.access_token, JWT_SECRET)
+        req.session.user = data
+    } catch { }
+    next()
+})
 
 app.get("/", (req, res) => {
     res.status(200).send("<h1>Bienvenido a mi página de inicio!!</h1>")
@@ -73,10 +81,11 @@ app.patch("/movies/:id", (req, res) => {
 app.get("/users", async (req, res) => {
     try {
         const { data: users, error } = await supabase.from('Users').select('*')
+        const sanitizedUsers = users.map(u => excludeSensibleInformationFromUser(u))
         if(error) {
             return res.status(500).json({ error: error.message })
         }
-        return res.status(200).json(users) 
+        return res.status(200).json(sanitizedUsers) 
     } catch(err) {
         res.status(500).json({ error: "Error interno del servidor" })
     }
@@ -112,7 +121,6 @@ app.post("/users/register", async (req, res) => {
 })
 
 app.post("/users/login", async (req, res) => {
-    console.log("Recibido un intento de login: ", req.body)
     const result = validateUser(req.body)
     if(!result.success) {
         return res.status(422).json({ error: JSON.parse(result.error.message) })
@@ -130,27 +138,22 @@ app.post("/users/login", async (req, res) => {
         return res.status(401).json({ message: "Invalid credentials" })
     }
     const token = jwt.sign(
-        { id: userData.id, username: userData.username },
-        JWT_SECRET,
-        { expiresIn: '1h' }
+        { username: userData.username },
+        JWT_SECRET
     )
     const publicUser = excludeSensibleInformationFromUser(userData)
     return res.status(200).json({
-        message: "Login successful",
-        token
+        message: "Success",
+        access_token: token
     })
 })
 
 app.post("/users/get-self-info", async (req, res) => {
-    console.log("Token recibido: ", req.body.token)
-    const token = req.body.token
-    if(!token) {
+    if(!req.session) {
         return res.status(401).json({ message: "Unauthorized" })
     }
     try {
-        const data = jwt.verify(token, JWT_SECRET)
-        console.log("Token verified: ", data)
-        return res.render("protected", data)
+        return res.status(200).json({ user: req.session.user })
     } catch(e) {
         return res.status(401).json({ message: "Unauthorized" })
     }

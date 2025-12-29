@@ -31,7 +31,7 @@ function validateUserRegister(data) {
 }
 
 function excludeSensibleInformationFromUser(user) {
-    const { password, created_at, updated_at, deleted_at, ...publicUser } = user
+    const { id, password, created_at, updated_at, deleted_at, ...publicUser } = user
     return publicUser
 }
 
