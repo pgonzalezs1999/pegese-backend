@@ -1,0 +1,22 @@
+service: mi-servidor-express
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-west-1
+  stage: ${opt:stage, 'dev'}
+  environment:
+    NODE_ENV: ${self:provider.stage}
+    JWT_SECRET: ${env:JWT_SECRET}
+    SALT_ROUNDS: ${env:SALT_ROUNDS}
+    SUPABASE_URL: ${env:SUPABASE_URL}
+    SUPABASE_KEY: ${env:SUPABASE_KEY}
+
+functions:
+  api:
+    handler: express.handler
+    events:
+      - httpApi: '*' # Crea automáticamente la URL de API Gateway
+
+plugins:
+  - serverless-offline # Opcional: para probar Lambda localmente

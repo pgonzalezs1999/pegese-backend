@@ -4,11 +4,12 @@ const crypto = require("node:crypto")
 const { supabase } = require("./supabase/supabase")
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
-const { PORT, SALT_ROUNDS, JWT_SECRET } = require("./config")
+const { PORT, SALT_ROUNDS, JWT_SECRET, NODE_ENV } = require("./config")
 
 const movies = require("./movies.json")
 const { validateMovie, validatePartialMovie } = require("./schemas/movies")
 const { validateUser, validateUserRegister, excludeSensibleInformationFromUser } = require("./schemas/users")
+const serverless = require('serverless-http');
 
 const app = express()
 app.disable("x-powered-by")
@@ -130,7 +131,7 @@ app.post("/users/login", async (req, res) => {
         .select('*')
         .eq('username', req.body.username)
         .single()
-    if (error || !userData) {
+    if(error || !userData) {
         return res.status(401).json({ message: "Invalid credentials" })
     }
     const isValid = bcrypt.compareSync(req.body.password, userData.password)
@@ -163,6 +164,10 @@ app.use((req, res) => {
     res.status(404).send("Ruta no encontrada")
 })
 
-app.listen(PORT, () => {
-    console.log(`Server is listening on http://localhost:${PORT}`)
-})
+if(NODE_ENV === "local") {
+    app.listen(PORT, () => {
+        console.log(`Server is listening on http://localhost:${PORT}`)
+    })
+}
+
+module.exports.handler = serverless(app);
