@@ -4,7 +4,7 @@ const crypto = require("node:crypto")
 const { supabase } = require("./supabase/supabase")
 const jwt = require("jsonwebtoken")
 const bcrypt = require('bcrypt');
-const { PORT, SALT_ROUNDS, JWT_SECRET, NODE_ENV } = require("./config")
+const { PORT, JWT_SECRET, NODE_ENV } = require("./config")
 
 const movies = require("./movies.json")
 const { validateMovie, validatePartialMovie } = require("./schemas/movies")
@@ -101,7 +101,7 @@ app.post("/users/register", async (req, res) => {
     const id = crypto.randomUUID()
     console.log(id)
     const { username, password } = req.body
-    const hashedPassword = bcrypt.hashSync(password, SALT_ROUNDS)
+    const hashedPassword = bcrypt.hashSync(password, 10)
     try {
         const { error } = await supabase
             .from('Users')
