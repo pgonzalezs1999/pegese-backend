@@ -16,6 +16,3 @@ functions:
     handler: express.handler
     events:
       - httpApi: '*' # Crea automáticamente la URL de API Gateway
-
-plugins:
-  - serverless-offline # Opcional: para probar Lambda localmente
