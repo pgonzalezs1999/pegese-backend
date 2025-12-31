@@ -3,13 +3,13 @@ const crypto = require("node:crypto")
 
 const { supabase } = require("./supabase/supabase")
 const jwt = require("jsonwebtoken")
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 const { PORT, JWT_SECRET, NODE_ENV } = require("./config")
 
 const movies = require("./movies.json")
 const { validateMovie, validatePartialMovie } = require("./schemas/movies")
 const { validateUser, validateUserRegister, excludeSensibleInformationFromUser } = require("./schemas/users")
-const serverless = require('serverless-http');
+const serverless = require("serverless-http");
 
 const app = express()
 app.disable("x-powered-by")
@@ -18,10 +18,13 @@ app.disable("etag")
 app.use(express.json())
 app.use((req, res, next) => {
     req.session = { user: null }
-    try {
-        const data = jwt.verify(req.body.access_token, JWT_SECRET)
-        req.session.user = data
-    } catch { }
+    const access_token = req.body.access_token
+    if(access_token) {
+        try {
+            const data = jwt.verify(req.body.access_token, JWT_SECRET)
+            req.session.user = data
+        } catch { }
+    }
     next()
 })
 
@@ -81,7 +84,7 @@ app.patch("/movies/:id", (req, res) => {
 
 app.get("/users", async (req, res) => {
     try {
-        const { data: users, error } = await supabase.from('Users').select('*')
+        const { data: users, error } = await supabase.from("Users").select("*")
         const sanitizedUsers = users.map(u => excludeSensibleInformationFromUser(u))
         if(error) {
             return res.status(500).json({ error: error.message })
@@ -104,7 +107,7 @@ app.post("/users/register", async (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10)
     try {
         const { error } = await supabase
-            .from('Users')
+            .from("Users")
             .insert([{ id, username, password: hashedPassword }])
         if(error) {
             if(error.code === "23505") { // 23505 = "Unique Violation" de PostgreSQL
@@ -127,9 +130,9 @@ app.post("/users/login", async (req, res) => {
         return res.status(422).json({ error: JSON.parse(result.error.message) })
     }
     const { data: userData, error } = await supabase
-        .from('Users')
-        .select('*')
-        .eq('username', req.body.username)
+        .from("Users")
+        .select("*")
+        .eq("username", req.body.username)
         .single()
     if(error || !userData) {
         return res.status(401).json({ message: "Invalid credentials" })
@@ -138,14 +141,43 @@ app.post("/users/login", async (req, res) => {
     if(!isValid) {
         return res.status(401).json({ message: "Invalid credentials" })
     }
-    const token = jwt.sign(
+    const accessToken = jwt.sign(
         { username: userData.username },
-        JWT_SECRET
+        JWT_SECRET,
+        { expiresIn: "15m" }
     )
-    const publicUser = excludeSensibleInformationFromUser(userData)
+    const refreshToken = crypto.randomBytes(64).toString("hex")
+    await supabase
+        .from("Users")
+        .update({ refresh_token: refreshToken })
+        .eq("id", userData.id)
     return res.status(200).json({
         message: "Success",
-        access_token: token
+        access_token: accessToken,
+        refresh_token: refreshToken
+    })
+})
+
+app.post("/users/refresh-token", async (req, res) => {
+    const { refresh_token } = req.body
+    if(!refresh_token) {
+        return res.status(400).json({ message: "Unauthorized" })
+    }
+    const { data: userData, error } = await supabase
+        .from("Users")
+        .select("*")
+        .eq("refresh_token", refresh_token)
+        .single()
+    if(error || !userData) {
+        return res.status(403).json({ message: "Forbidden" })
+    }
+    const newAccessToken = jwt.sign(
+        { username: userData.username },
+        JWT_SECRET,
+        { expiresIn: "15m" }
+    )
+    return res.status(200).json({
+        access_token: newAccessToken
     })
 })
 

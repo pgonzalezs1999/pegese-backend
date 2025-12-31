@@ -52,10 +52,18 @@ Content-Type: application/json
   "password": "abc123"
 }
 
+### Refresh token
+POST http://localhost:3000/users/refresh-token
+Content-Type: application/json
+
+{
+  "refresh_token": "3e89f504b162fdad4f90deb43356f40c22ca752147749c4982cc0302ff91851eb9bd494b04cb070818e50d5991425d3409c586c8cfab21cbb9eab145c1c59c3c"
+}
+
 ### Recuperar la información de uno mismo
 POST http://localhost:3000/users/get-self-info
 Content-Type: application/json
 
 {
-  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDAzIiwiaWF0IjoxNzY2OTg0NDU0fQ.KighvKDeTkLWLhO3gtv-9OCDhylYIvCSMM3jQDXsWLo"
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3MTk5MTk0LCJleHAiOjE3NjcxOTkyNTR9.7Md2mNADkG4ABpyERXQn9qI4bPcwcVqnvDebFljjPjQ"
 }
