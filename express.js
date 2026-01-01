@@ -17,11 +17,12 @@ app.disable("etag")
 
 app.use(express.json())
 app.use((req, res, next) => {
+    const authHeader = req.headers.authorization
+    const access_token = authHeader && authHeader.split(" ")[1]
     req.session = { user: null }
-    const access_token = req.body.access_token
     if(access_token) {
         try {
-            const data = jwt.verify(req.body.access_token, JWT_SECRET)
+            const data = jwt.verify(access_token, JWT_SECRET)
             req.session.user = data
         } catch { }
     }
@@ -91,7 +92,7 @@ app.get("/users", async (req, res) => {
         }
         return res.status(200).json(sanitizedUsers) 
     } catch(err) {
-        res.status(500).json({ error: "Error interno del servidor" })
+        res.status(500).json({ error: "Internal server error" })
     }
 })
 
@@ -144,7 +145,7 @@ app.post("/users/login", async (req, res) => {
     const accessToken = jwt.sign(
         { username: userData.username },
         JWT_SECRET,
-        { expiresIn: "15m" }
+        { expiresIn: "1m" }
     )
     const refreshToken = crypto.randomBytes(64).toString("hex")
     await supabase
@@ -159,26 +160,30 @@ app.post("/users/login", async (req, res) => {
 })
 
 app.post("/users/refresh-token", async (req, res) => {
-    const { refresh_token } = req.body
-    if(!refresh_token) {
-        return res.status(400).json({ message: "Unauthorized" })
+    const refreshTokenFromHeader = req.headers["x-refresh-token"]
+    if(!refreshTokenFromHeader) {
+        return res.status(400).json({ message: "Bad request" })
     }
-    const { data: userData, error } = await supabase
-        .from("Users")
-        .select("*")
-        .eq("refresh_token", refresh_token)
-        .single()
-    if(error || !userData) {
-        return res.status(403).json({ message: "Forbidden" })
+    try {
+        const { data: userData, error } = await supabase
+            .from("Users")
+            .select("*")
+            .eq("refresh_token", refreshTokenFromHeader)
+            .single()
+        if(error || !userData) {
+            return res.status(403).json({ message: "Forbidden" })
+        }
+        const newAccessToken = jwt.sign(
+            { username: userData.username },
+            JWT_SECRET,
+            { expiresIn: "1m" }
+        )
+        return res.status(200).json({
+            access_token: newAccessToken
+        })
+    } catch {
+        return res.status(500).json({ error: "Internal server error" })
     }
-    const newAccessToken = jwt.sign(
-        { username: userData.username },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-    )
-    return res.status(200).json({
-        access_token: newAccessToken
-    })
 })
 
 app.post("/users/get-self-info", async (req, res) => {
