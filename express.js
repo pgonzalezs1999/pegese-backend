@@ -51,7 +51,6 @@ app.post("/users/register", async (req, res) => {
         return res.status(422).json({ error: JSON.parse(result.error.message) })
     }
     const id = crypto.randomUUID()
-    console.log(id)
     const { username, password } = req.body
     const hashedPassword = bcrypt.hashSync(password, 10)
     try {
@@ -65,8 +64,7 @@ app.post("/users/register", async (req, res) => {
             return res.status(400).json({ error: error.message })
         }
         return res.status(201).json({
-            message: "User registered",
-            user: { id, username }
+            message: "Success"
         })
     } catch(e) {
         res.status(500).json({ error: "Internal server error" })
@@ -180,6 +178,30 @@ app.patch("/users/update-real-name", async (req, res) => {
         })
     } catch(e) {
         res.status(500).json({ error: "Internal server error" })
+    }
+})
+
+app.post("/users/check-username-availability", async(req, res) => {
+    const { username } = req.body
+    if(!username) {
+        return res.status(400).json({ error: "Bad request" })
+    }
+    try {
+        const { data, error } = await supabase
+            .from("Users")
+            .select("username")
+            .eq("username", username)
+            .is("deleted_at", null)
+            .maybeSingle()
+        if(error) {
+            return res.status(500).json({ error: error.message })
+        }
+        return res.status(200).json({
+            message: data === null
+        })
+    } catch(e) {
+        console.log(e)
+        return res.status(500).json({ error: "Internal server error" })
     }
 })
 

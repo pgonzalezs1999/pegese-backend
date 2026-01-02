@@ -6,7 +6,7 @@ POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-  "username": "pablo004",
+  "username": "pablo007",
   "password": "abc123"
 }
 
@@ -15,7 +15,7 @@ POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
-  "username": "pablo007",
+  "username": "pablo004",
   "password": "abc123"
 }
 
@@ -34,4 +34,12 @@ Content-Type: application/json
 
 {
   "real_name": "Pablo Updated"
+}
+
+### Comprobar si el username enviado existe en la BD
+POST http://localhost:3000/users/check-username-availability
+Content-Type: application/json
+
+{
+  "username": "pablo004"
 }
