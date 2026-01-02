@@ -15,7 +15,7 @@ POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
-  "username": "pablo004",
+  "username": "pablo007",
   "password": "abc123"
 }
 
@@ -25,4 +25,13 @@ x-refresh-token: bd041c74dcb9e7b4ce41c39af45861e39a8c769379ab71ccab290940082516d
 
 ### Recuperar la información de uno mismo
 POST http://localhost:3000/users/get-self-info
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3MzEwMzk3LCJleHAiOjE3NjczMTA0NTd9.lvhi9pM9_NEm4J9kIIbdnU9Hjwluo1NJMnKvhb86yVI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3MzE4OTAzLCJleHAiOjE3NjczMTk4MDN9.IbTcuaMyFMF2e48U0Z1koDtfl_Q0INqlUY0CGRFAqEo
+
+### Cambiar nombre real
+PATCH http://localhost:3000/users/update-real-name
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3MzE4OTAzLCJleHAiOjE3NjczMTk4MDN9.IbTcuaMyFMF2e48U0Z1koDtfl_Q0INqlUY0CGRFAqEo
+Content-Type: application/json
+
+{
+  "real_name": "Pablo Updated"
+}

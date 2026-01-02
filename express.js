@@ -6,8 +6,6 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt");
 const { PORT, JWT_SECRET, NODE_ENV } = require("./config")
 
-const movies = require("./movies.json")
-const { validateMovie, validatePartialMovie } = require("./schemas/movies")
 const { validateUser, validateUserRegister, excludeSensibleInformationFromUser } = require("./schemas/users")
 const serverless = require("serverless-http");
 
@@ -31,56 +29,6 @@ app.use((req, res, next) => {
 
 app.get("/", (req, res) => {
     res.status(200).send("<h1>Bienvenido a mi página de inicio!!</h1>")
-})
-
-app.get("/movies", (req, res) => {
-    const { genre } = req.query
-    if(genre) {
-        const filteredMovies = movies.filter
-        (movie => movie.genre.some(g => g.toLowerCase() === genre.toLowerCase())
-    )
-        return res.status(200).json(filteredMovies)
-    }
-    res.status(200).json(movies)
-})
-
-app.get("/movies/:id", (req, res) => {
-    const { id } = req.params
-    const movie = movies.find(movie => movie.id === id)
-    if(movie) return res.json(movie)
-    res.status(404).json({ message: "Película no encontrada"})
-})
-
-app.post("/movies", (req, res) => {
-    const result = validateMovie(req.body)
-    if(result.error) {
-        return res.status(422).json({ error: JSON.parse(result.error.message) })
-    }
-    const newMovie = {
-        id: crypto.randomUUID(),
-        ...result.data
-    }
-    movies.push(newMovie)
-    res.status(201).json(newMovie)
-})
-
-app.patch("/movies/:id", (req, res) => {
-    const result = validatePartialMovie(req.body)
-    if(!result.success) {
-        return res.status(422).json({ error: JSON.parse(result.error.message) })
-    }
-    const { id } = req.params
-    const movieIndex = movies.findIndex(movie => movie.id === id)
-    const movie = movies[movieIndex]
-    if(movieIndex < 0) {
-        return res.status(404).json({ message: "Película no encontrada"})
-    }
-    const updatedMovie = {
-        ...movie,
-        ...result.data
-    }
-    movies[movieIndex] = updatedMovie
-    return res.json(updatedMovie)
 })
 
 app.get("/users", async (req, res) => {
@@ -145,7 +93,7 @@ app.post("/users/login", async (req, res) => {
     const accessToken = jwt.sign(
         { username: userData.username },
         JWT_SECRET,
-        { expiresIn: "1m" }
+        { expiresIn: "15m" }
     )
     const refreshToken = crypto.randomBytes(64).toString("hex")
     await supabase
@@ -176,7 +124,7 @@ app.post("/users/refresh-token", async (req, res) => {
         const newAccessToken = jwt.sign(
             { username: userData.username },
             JWT_SECRET,
-            { expiresIn: "1m" }
+            { expiresIn: "15m" }
         )
         return res.status(200).json({
             access_token: newAccessToken
@@ -191,9 +139,47 @@ app.post("/users/get-self-info", async (req, res) => {
         return res.status(401).json({ message: "Unauthorized" })
     }
     try {
-        return res.status(200).json({ user: req.session.user })
+        const { data: userData, error } = await supabase
+            .from("Users")
+            .select("username, real_name")
+            .eq("username", req.session.user.username)
+            .single()
+        if(!userData) {
+            return res.status(401).json({ message: "Invalid credentials" })
+        }
+        return res.status(200).json({
+            username: req.session.user.username,
+            real_name: userData.real_name
+        })
     } catch(e) {
+        return res.status(500).json({ message: "Internal server error" })
+    }
+})
+
+app.patch("/users/update-real-name", async (req, res) => {
+    if(!req.session.user) {
         return res.status(401).json({ message: "Unauthorized" })
+    }
+    const { real_name } = req.body
+    if(!real_name) {
+        return res.status(400).json({ message: "Bad request" })
+    }
+    try {
+        const { data, error } = await supabase
+            .from("Users")
+            .update({ real_name: real_name })
+            .eq("username", req.session.user.username)
+            .select()
+            .single()
+        if(error) {
+            return res.status(500).json({ error: error.message })
+        }
+        return res.status(200).json({
+            message: "Success",
+            real_name: data.real_name
+        })
+    } catch(e) {
+        res.status(500).json({ error: "Internal server error" })
     }
 })
 
