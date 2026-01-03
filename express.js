@@ -63,9 +63,7 @@ app.post("/users/register", async (req, res) => {
             }
             return res.status(400).json({ error: error.message })
         }
-        return res.status(201).json({
-            message: "Success"
-        })
+        await login(username, password, res)
     } catch(e) {
         res.status(500).json({ error: "Internal server error" })
     }
@@ -76,33 +74,11 @@ app.post("/users/login", async (req, res) => {
     if(!result.success) {
         return res.status(422).json({ error: JSON.parse(result.error.message) })
     }
-    const { data: userData, error } = await supabase
-        .from("Users")
-        .select("*")
-        .eq("username", req.body.username)
-        .single()
-    if(error || !userData) {
-        return res.status(401).json({ message: "Invalid credentials" })
+    try {
+        await login(req.body.username, req.body.password, res)
+    } catch(e) {
+        res.status(500).json({ error: "Internal server error" })
     }
-    const isValid = bcrypt.compareSync(req.body.password, userData.password)
-    if(!isValid) {
-        return res.status(401).json({ message: "Invalid credentials" })
-    }
-    const accessToken = jwt.sign(
-        { username: userData.username },
-        JWT_SECRET,
-        { expiresIn: "15m" }
-    )
-    const refreshToken = crypto.randomBytes(64).toString("hex")
-    await supabase
-        .from("Users")
-        .update({ refresh_token: refreshToken })
-        .eq("id", userData.id)
-    return res.status(200).json({
-        message: "Success",
-        access_token: accessToken,
-        refresh_token: refreshToken
-    })
 })
 
 app.post("/users/refresh-token", async (req, res) => {
@@ -212,6 +188,36 @@ app.use((req, res) => {
 if(NODE_ENV === "local") {
     app.listen(PORT, () => {
         console.log(`Server is listening on http://localhost:${PORT}`)
+    })
+}
+
+async function login(username, password, res) {
+    const { data: userData, error } = await supabase
+        .from("Users")
+        .select("*")
+        .eq("username", username)
+        .single()
+    if(error || !userData) {
+        return res.status(401).json({ message: "Invalid credentials" })
+    }
+    const isValid = bcrypt.compareSync(password, userData.password)
+    if(!isValid) {
+        return res.status(401).json({ message: "Invalid credentials" })
+    }
+    const accessToken = jwt.sign(
+        { username: userData.username },
+        JWT_SECRET,
+        { expiresIn: "15m" }
+    )
+    const refreshToken = crypto.randomBytes(64).toString("hex")
+    await supabase
+        .from("Users")
+        .update({ refresh_token: refreshToken })
+        .eq("id", userData.id)
+    return res.status(200).json({
+        message: "Success",
+        access_token: accessToken,
+        refresh_token: refreshToken
     })
 }
 
