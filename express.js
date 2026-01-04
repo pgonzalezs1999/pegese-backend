@@ -115,16 +115,14 @@ app.post("/users/get-self-info", async (req, res) => {
     try {
         const { data: userData, error } = await supabase
             .from("Users")
-            .select("username, real_name")
+            .select("*")
             .eq("username", req.session.user.username)
             .single()
         if(!userData) {
             return res.status(401).json({ message: "Invalid credentials" })
         }
-        return res.status(200).json({
-            username: req.session.user.username,
-            real_name: userData.real_name
-        })
+        const publicUserData = excludeSensibleInformationFromUser(userData)
+        return res.status(200).json({ user: publicUserData })
     } catch(e) {
         return res.status(500).json({ message: "Internal server error" })
     }
@@ -197,7 +195,10 @@ async function login(username, password, res) {
         .select("*")
         .eq("username", username)
         .single()
-    if(error || !userData) {
+    if(error) {
+        return res.status(500).json({ message: "Internal server error" })
+    }
+    if(!userData) {
         return res.status(401).json({ message: "Invalid credentials" })
     }
     const isValid = bcrypt.compareSync(password, userData.password)

@@ -25,7 +25,7 @@ x-refresh-token: bd041c74dcb9e7b4ce41c39af45861e39a8c769379ab71ccab290940082516d
 
 ### Recuperar la información de uno mismo
 POST http://localhost:3000/users/get-self-info
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDEwIiwiaWF0IjoxNzY3NDM4NDk3LCJleHAiOjE3Njc0MzkzOTd9.fkt1lQg6XiwgmCuYQbFmBb-Ys3S_tFi0OVuodlMT-gE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3NTUzMDA2LCJleHAiOjE3Njc1NTM5MDZ9.D-jwUI__i_bBtaJIrhIRs6j9ZJjI4qWXEn3Z-f-39jI
 
 ### Cambiar nombre real
 PATCH http://localhost:3000/users/update-real-name
