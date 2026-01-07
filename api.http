@@ -10,13 +10,22 @@ Content-Type: application/json
   "password": "abc123"
 }
 
-### Iniciar sesión
+### Iniciar sesión con usuario y contraseña
 POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
   "username": "pablo004",
   "password": "abc123"
+}
+
+### Iniciar sesión con JWT y refresh_token
+POST http://localhost:3000/users/login/jwt
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3Nzk1ODY5LCJleHAiOjE3Njc3OTY3Njl9.BzUKPyskBMx5qJ-Auou4BSPoNey4FYtqkQV44PIfYpo
+Content-Type: application/json
+
+{
+  "refresh_token": "3768f9f3265e47d44014e25bb22570d93504e89d66ebf444eeb1f272a8a98823c4504e297f2f46f7527c0d0ef190a50b0ed112211ff10b7ea03aeee3a7cb5669"
 }
 
 ### Refresh token
@@ -43,3 +52,7 @@ Content-Type: application/json
 {
   "username": "pablo004"
 }
+
+### Cerrar sesión
+POST http://localhost:3000/users/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3Nzk0NDc3LCJleHAiOjE3Njc3OTUzNzd9.yWI90ObOg5Rv9H1juwe1PYBmwm1znoCwWgUi4u5KpoQ

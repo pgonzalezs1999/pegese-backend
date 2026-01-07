@@ -69,6 +69,34 @@ app.post("/users/register", async (req, res) => {
     }
 })
 
+app.post("/users/login/jwt", async(req, res) => {
+    if(!req.session.user) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+    const { refresh_token } = req.body
+    if(!refresh_token) {
+        return res.status(400).json({ message: "Bad request" })
+    }
+    try {
+        const { data: userData, error } = await supabase
+            .from("Users")
+            .select("refresh_token")
+            .eq("username", req.session.user.username)
+            .single()
+        if(error || !userData) {
+            return res.status(401).json({ message: "Unauthorized" })
+        }
+        if(userData.refresh_token !== refresh_token) {
+            return res.status(401).json({ message: "Unauthorized" })
+        }
+        return res.status(200).json({
+            message: "Success"
+        })
+    } catch(e) {
+        return res.status(500).json({ error: "Internal server error" })
+    }
+})
+
 app.post("/users/login", async (req, res) => {
     const result = validateUser(req.body)
     if(!result.success) {
@@ -172,6 +200,27 @@ app.post("/users/check-username-availability", async(req, res) => {
         }
         return res.status(200).json({
             message: data === null
+        })
+    } catch(e) {
+        console.log(e)
+        return res.status(500).json({ error: "Internal server error" })
+    }
+})
+
+app.post("/users/logout", async(req, res) => {
+    if(!req.session.user) {
+        return res.status(400).json({ error: "Bad request" })
+    }
+    try {
+        const { error } = await supabase
+            .from("Users")
+            .update({ refresh_token: null })
+            .eq("username", req.session.user.username)
+        if(error) {
+            return res.status(500).json({ error: error.message })
+        }
+        return res.status(200).json({
+            message: "Success"
         })
     } catch(e) {
         console.log(e)
