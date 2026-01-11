@@ -6,7 +6,12 @@ const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt");
 const { PORT, JWT_SECRET, NODE_ENV } = require("./config")
 
-const { validateUser, validateUserRegister, excludeSensibleInformationFromUser } = require("./schemas/users")
+const {
+    validateUser,
+    validateUserRegister,
+    validateUserUpdate,
+    excludeSensibleInformationFromUser
+} = require("./schemas/users")
 const serverless = require("serverless-http");
 
 const app = express()
@@ -39,8 +44,8 @@ app.get("/users", async (req, res) => {
             return res.status(500).json({ error: error.message })
         }
         return res.status(200).json(sanitizedUsers) 
-    } catch(err) {
-        res.status(500).json({ error: "Internal server error" })
+    } catch(e) {
+        res.status(500).json({ message: "Internal server error" })
     }
 })
 
@@ -48,7 +53,7 @@ app.get("/users", async (req, res) => {
 app.post("/users/register", async (req, res) => {
     const result = validateUserRegister(req.body)
     if(!result.success) {
-        return res.status(422).json({ error: JSON.parse(result.error.message) })
+        return res.status(422).json({ message: "Bad request" })
     }
     const id = crypto.randomUUID()
     const { username, password } = req.body
@@ -61,11 +66,11 @@ app.post("/users/register", async (req, res) => {
             if(error.code === "23505") { // 23505 = "Unique Violation" de PostgreSQL
                 return res.status(409).json({ message: "Username already taken" })
             }
-            return res.status(400).json({ error: error.message })
+            return res.status(400).json({ message: "Internal server error" })
         }
         await login(username, password, res)
     } catch(e) {
-        res.status(500).json({ error: "Internal server error" })
+        res.status(500).json({ message: "Internal server error" })
     }
 })
 
@@ -93,19 +98,19 @@ app.post("/users/login/jwt", async(req, res) => {
             message: "Success"
         })
     } catch(e) {
-        return res.status(500).json({ error: "Internal server error" })
+        return res.status(500).json({ message: "Internal server error" })
     }
 })
 
 app.post("/users/login", async (req, res) => {
     const result = validateUser(req.body)
     if(!result.success) {
-        return res.status(422).json({ error: JSON.parse(result.error.message) })
+        return res.status(422).json({ message: "Bad request" })
     }
     try {
         await login(req.body.username, req.body.password, res)
     } catch(e) {
-        res.status(500).json({ error: "Internal server error" })
+        res.status(500).json({ message: e.message })
     }
 })
 
@@ -132,7 +137,7 @@ app.post("/users/refresh-token", async (req, res) => {
             access_token: newAccessToken
         })
     } catch {
-        return res.status(500).json({ error: "Internal server error" })
+        return res.status(500).json({ message: "Internal server error" })
     }
 })
 
@@ -172,21 +177,21 @@ app.patch("/users/update-real-name", async (req, res) => {
             .select()
             .single()
         if(error) {
-            return res.status(500).json({ error: error.message })
+            return res.status(500).json({ message: "Internal server error" })
         }
         return res.status(200).json({
             message: "Success",
             real_name: data.real_name
         })
     } catch(e) {
-        res.status(500).json({ error: "Internal server error" })
+        res.status(500).json({ message: "Internal server error" })
     }
 })
 
 app.post("/users/check-username-availability", async(req, res) => {
     const { username } = req.body
     if(!username) {
-        return res.status(400).json({ error: "Bad request" })
+        return res.status(400).json({ message: "Bad request" })
     }
     try {
         const { data, error } = await supabase
@@ -196,20 +201,20 @@ app.post("/users/check-username-availability", async(req, res) => {
             .is("deleted_at", null)
             .maybeSingle()
         if(error) {
-            return res.status(500).json({ error: error.message })
+            return res.status(500).json({ message: "Internal server error" })
         }
         return res.status(200).json({
             message: data === null
         })
     } catch(e) {
         console.log(e)
-        return res.status(500).json({ error: "Internal server error" })
+        return res.status(500).json({ message: "Internal server error" })
     }
 })
 
 app.post("/users/logout", async(req, res) => {
     if(!req.session.user) {
-        return res.status(400).json({ error: "Bad request" })
+        return res.status(400).json({ message: "Bad request" })
     }
     try {
         const { error } = await supabase
@@ -217,14 +222,89 @@ app.post("/users/logout", async(req, res) => {
             .update({ refresh_token: null })
             .eq("username", req.session.user.username)
         if(error) {
-            return res.status(500).json({ error: error.message })
+            return res.status(500).json({ message: "Internal server error" })
         }
         return res.status(200).json({
             message: "Success"
         })
     } catch(e) {
         console.log(e)
-        return res.status(500).json({ error: "Internal server error" })
+        return res.status(500).json({ message: "Internal server error" })
+    }
+})
+
+app.post("/users/update", async (req, res) => {
+    if(!req.session.user) {
+        return res.status(401).json({ message: "Unauthorized" })
+    }
+    const validationResult = validateUserUpdate(req.body)
+    if(!validationResult.success) {
+        return res.status(422).json({ message: "Bad request"})
+    }
+    const { username,
+        real_name,
+        real_surname,
+        phone_prefix,
+        phone_number
+    } = req.body
+
+    const hasAnyField =
+        username ||
+        real_name ||
+        real_surname ||
+        phone_prefix ||
+        phone_number
+
+    if(!hasAnyField) {
+        return res.status(400).json({ message: "Bad request" })
+    }
+    const phonePrefixProvided = phone_prefix !== undefined
+    const phoneNumberProvided = phone_number !== undefined
+    if(phonePrefixProvided !== phoneNumberProvided) {
+        return res.status(400).json({
+            message: "Bad request"
+        })
+    }
+    try {
+        const updates = {}
+        if(username) {
+            const { data: existingUser, error: usernameError } = await supabase
+                .from("Users")
+                .select("id")
+                .eq("username", username)
+                .maybeSingle()
+            if(usernameError) {
+                return res.status(500).json({ message: error.message })
+            }
+            if(existingUser) {
+                return res.status(409).json({ message: "Username already taken" })
+            }
+            updates.username = username
+        }
+        if(real_name !== undefined) {
+            updates.real_name = real_name
+        }
+        if(real_surname !== undefined) {
+            updates.real_surname = real_surname
+        }
+        if(phonePrefixProvided && phoneNumberProvided) {
+            updates.phone_prefix = phone_prefix
+            updates.phone_number = phone_number
+        }
+        const { data, error } = await supabase
+            .from("Users")
+            .update(updates)
+            .eq("id", req.session.user.id)
+            .select()
+            .single()
+        if(error) {
+            return res.status(500).json({ message: error.message})
+        }
+        return res.status(200).json({
+            message: "Success",
+        })
+    } catch (e) {
+        return res.status(500).json({ message: e.message })
     }
 })
 
@@ -245,7 +325,7 @@ async function login(username, password, res) {
         .eq("username", username)
         .single()
     if(error) {
-        return res.status(500).json({ message: "Internal server error" })
+        return res.status(401).json({ message: "Unauthorized" })
     }
     if(!userData) {
         return res.status(401).json({ message: "Invalid credentials" })
@@ -255,7 +335,7 @@ async function login(username, password, res) {
         return res.status(401).json({ message: "Invalid credentials" })
     }
     const accessToken = jwt.sign(
-        { username: userData.username },
+        { id: userData.id, username: userData.username },
         JWT_SECRET,
         { expiresIn: "15m" }
     )

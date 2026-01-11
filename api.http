@@ -15,7 +15,7 @@ POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
-  "username": "pablo004",
+  "username": "gloria",
   "password": "abc123"
 }
 
@@ -56,3 +56,16 @@ Content-Type: application/json
 ### Cerrar sesión
 POST http://localhost:3000/users/logout
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBhYmxvMDA0IiwiaWF0IjoxNzY3Nzk0NDc3LCJleHAiOjE3Njc3OTUzNzd9.yWI90ObOg5Rv9H1juwe1PYBmwm1znoCwWgUi4u5KpoQ
+
+### Actualizar datos del propio usuario
+POST http://localhost:3000/users/update
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNmZGMxZjAwLWNkYWYtNGQ2Yy04NjhiLWVhYTBkZGNjYmU1YiIsInVzZXJuYW1lIjoiZ2xvcmlhIiwiaWF0IjoxNzY4MTU3MjM5LCJleHAiOjE3NjgxNTgxMzl9.wJGPZujA0h1xOHyC0-LQYRNZcjBLd6qzcP6eIjzyJ6c
+Content-Type: application/json
+
+{
+  "username": "gloria001",
+  "real_name": "Gloria Updated",
+  "real_surname": "Capellan",
+  "phone_number": "666555666",
+  "phone_prefix": "34"
+}
